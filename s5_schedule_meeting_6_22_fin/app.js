@@ -106,9 +106,29 @@ function read_out_suggestion(item) {
 
 
 // Helper function for switching back and forth between today and tomorrow
-function find_prev_sibling(dateCell) {
 
+// Find_prev_sibling - Given a date cell, c [which is a weekday] in the Calendar Control,
+// return its previous sibling which is not a weekend.
+function find_prev_sibling(dateCell) { 
 
+    // Locate the previous sibling
+    var dateCellPrevious = dateCell.previousSibling();
+
+    if (dateCellPrevious != null) {
+
+        if ((dateCellPrevious.previousSibling() != null) && (dateCellPrevious.nextSibling() != null)) {
+
+            return dateCellPrevious; // A weekday
+
+        } else if (dateCellPrevious.previousSibling() == null){ // A Sunday --> That is the only case
+        
+            // Then we go back to find last Friday
+            
+        }
+
+    } else {
+        throw new Error("Error. The cell might not be a weekday. ");
+    }
 
 }
 
