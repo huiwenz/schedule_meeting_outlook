@@ -114,26 +114,139 @@ function find_prev_sibling(dateCell) {
     // Locate the previous sibling
     var dateCellPrevious = dateCell.previousSibling();
 
+    // Record final result
+    var finalResult;
+
     if (dateCellPrevious != null) {
 
-        if ((dateCellPrevious.previousSibling() != null) && (dateCellPrevious.nextSibling() != null)) {
+        if ((dateCellPrevious.previousSibling() != null) && (dateCellPrevious.nextSibling() != null)) { // A weekday
 
-            return dateCellPrevious; // A weekday
+            return dateCellPrevious;
 
-        } else if (dateCellPrevious.previousSibling() == null){ // A Sunday --> That is the only case
+        } else if (dateCellPrevious.previousSibling() == null){ // A Sunday --> That is the only case. Can't be a Saturday. 
         
             // Then we go back to find last Friday
+
+            ///////////////////////////////////////////////////////// CHECK ERRORS(MAYBE CHANGE TO PROMISES?) /////////////////////////////////////////////////////////
+            // Get the week
+            var dateCellWeek = dateCellPrevious.parentNode();
+
+            // Check if the week is the first week of the month
+            var dateCellPrevWeek = dateCellWeek.previousSibling();
+            var firstDayPrevWeek = dateCellPrevWeek.firstChild();
+
+            if (firstDayPrevWeek != null) {
+
+                if (firstDayPrevWeek.name == "Su") { // We need to switch back to previous month
+
+                    // Press the Previous button to go back to the previous month
+                    // We don't return a promise for now
+
+                    var previousButton = uia.root().findFirst(function (el) {
+                        return ((el.name == "Previous Button") && (el.parentNode().name == "Calendar Control")); // Still need to check if this is the best way
+                    }, 1, 11);
+
+                    if (previousButton != null) {
+
+
+                        var invokePatternPrevButton = previousButton.getPattern(10000);
+                        invokePatternPrevButton.invoke();
+
+                        /////////////////////////////////////////////////////////
+                        // After invoking, you need to wait for 2 seconds
+                        host.setTimeout(function () {
+
+                            // Return the last weekday of previous month
+                            // Second last week
+                            ////////////////////////////////////////////// TBD: ERROR HANDLING //////////////////////////////////////////////
+                            var calendarControl = uia.root().findFirst(function (el) { return (el.name == "Calendar Control"); }, 0, 10);
+
+                            var weeksTable = calendarControl.lastChild().firstChild().nextSibling();
+
+                            // Second last week
+                            if ((weeksTable != null) && (weeksTable.childNodes().length == 7)) {
+
+                                var secondLastWeek = weeksTable.childNodes()[5];
+
+                                return secondLastWeek.childNodes()[5]; // A Friday
+
+                            } else {
+                                throw new Error("You didn't find the correct weeks table!");
+                            }
+                            ////////////////////////////////////////////// TBD: ERROR HANDLING //////////////////////////////////////////////
+
+
+                        }, 2000);
+                        /////////////////////////////////////////////////////////
+
+                    } else {
+                        throw new Error("Can't find Previous Button!!")
+                    }
+
+                } else { // Just find the 6th child of the previous week -- A Friday
+
+
+                    if (firstDayPrevWeek.length == 7) {
+                        return firstDayPrevWeek.childNodes()[5];
+                    } else {
+                        throw new Error("There is something wrong with the previous week!!");
+                    }
+
+                }
+
+            }
+
+            ///////////////////////////////////////////////////////// CHECK ERRORS /////////////////////////////////////////////////////////
             
         }
 
     } else {
-        throw new Error("Error. The cell might not be a weekday. ");
+        throw new Error("Error. The cell might not be a weekday. "); // Error
     }
 
 }
 
 function find_next_sibling(dateCell) {
 
+    var nextOne = dateCell.nextSibling();
+
+    if (nextOne != null) {
+        
+        if ((nextOne.previousSibling() != null) && (nextOne.nextSibling() != null)) {
+            // A weekday
+            return nextOne;
+        } else if (nextOne.nextSibling() == null) { // A Saturday
+
+            ///////////////////////////////////////////////////// ERROR HANDLING /////////////////////////////////////////////////////
+            var thisWeek = nextOne.parentNode();
+
+            if (thisWeek != null) {
+
+                var nextWeek = thisWeek.nextSibling();
+
+                if (nextWeek != null) {
+
+                    return nextWeek.childNodes()[1];
+
+
+                } else {
+                    throw new Error("Can't find next week! Something is wrong.");
+                }
+
+            } else {
+                throw new Error("Can't find this week cell group! Somethinh is wrong.");
+            }
+
+            ///////////////////////////////////////////////////// ERROR HANDLING /////////////////////////////////////////////////////
+
+
+        }
+
+    } else {
+
+        throw new Error("Error. The cell might not be a weekday.");
+
+    }
 
 
 }
@@ -348,7 +461,7 @@ host.onKeypress = function (e) {
     else if (e.keyCode === 57) {
 
         // Locate the Calendar Control on the top right
-        return Q.fcall(function () { return uia.root().findFirst(function (el) { return (el.name == "Calendar Control"); }, 0, 10)})
+        return Q.fcall(function () { return uia.root().findFirst(function (el) { return (el.name == "Calendar Control"); }, 0, 10); })
        
         .then(function (calendarControlWindow) {
 
