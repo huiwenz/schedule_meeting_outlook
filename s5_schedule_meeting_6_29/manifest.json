@@ -1,0 +1,10 @@
+{
+    "version": 10.0,
+    "description": "Outlook Script",
+    "process": "OUTLOOK.EXE",
+    "scripts" : [
+            "underscore.js",
+            "q.js",
+            "app.js"]
+
+}
